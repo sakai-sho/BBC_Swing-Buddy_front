@@ -119,6 +119,12 @@ export default function App() {
         break;
     }
   };
+  const handleOpenReview = (review: Review) => {
+  setSelectedReview(review);
+  setCurrentScreen('review-detail');
+};
+
+
 
   const renderWelcomeScreen = () => (
     <div className="min-h-screen bg-gradient-to-b from-purple-500 via-purple-600 to-pink-500 flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -164,6 +170,7 @@ export default function App() {
       { step: 2, lines: ['Not AI.', 'Not theory.', 'Real feedback', 'from a', 'real coach.'], component: 'golfbag' },
       { step: 3, lines: ['Find your', 'best golf', 'buddy'], component: 'crouching' },
     ] as const;
+
 
     const currentData = onboardingData[onboardingStep];
 
@@ -399,7 +406,7 @@ export default function App() {
       )}
 
       {currentScreen === 'home' && (
-        <HomeScreen onNavigate={handleNavigate} onOpenReview={setSelectedReview} />
+        <HomeScreen onNavigate={handleNavigate} onOpenReview={handleOpenReview} />
       )}
       {currentScreen === 'coach-home' && <CoachHome onNavigate={handleNavigate} />}
       {currentScreen === 'request' && <RequestScreen onNavigate={handleNavigate} />}

@@ -1,3 +1,4 @@
+/* === App.tsx 修正版（前半）=== */
 import React, { useState, useEffect } from 'react';
 import {
   Home as HomeIcon,
@@ -58,16 +59,12 @@ type Screen =
   | 'settings-upload' | 'settings-storage' | 'settings-help' | 'settings-terms' | 'settings-privacy'
   | 'settings-appinfo' | 'settings-rate' | 'coach-signup' | 'coach-signup-done'
   | 'review-player' | 'review-detail' | 'review-timeline' | 'coach-jobs' | 'coach-review'
-  // ★ 追加
   | 'video-detail' | 'coach-advice-new';
 
-// 本番以外ではバリデーションをスキップ
 const DEV_BYPASS = process.env.NODE_ENV !== 'production';
 
-// 役割ごとの画面制限
 const COACH_ONLY: Screen[] = [
   'coach-home', 'coach-signup', 'coach-signup-done', 'coach-jobs', 'coach-review', 'request-detail',
-  // ★ 新フローもコーチ専用に
   'video-detail', 'coach-advice-new',
 ];
 const USER_ONLY: Screen[] = ['home', 'request', 'request-club', 'request-problem', 'request-done', 'mypage'];
@@ -85,18 +82,14 @@ export default function App() {
   const [birthData, setBirthData] = useState({ year: '', month: '', day: '' });
   const [genderData, setGenderData] = useState<'male' | 'female' | ''>('');
   const [mailData, setMailData] = useState('');
-
-  // ★ 追加：新フロー用の videoId
   const [currentVideoId, setCurrentVideoId] = useState<string>('');
 
   useEffect(() => {
     initAuth();
   }, []);
 
-  // 役割で遷移をガード
   const guardedSetScreen = (screen: Screen, params?: any) => {
-    const role = getAuth().role; // 'user' | 'coach' | null
-    // Home.tsx から 'profile' が来る場合を正規化
+    const role = getAuth().role;
     const normalized = (screen as any) === 'profile' ? ('mypage' as Screen) : screen;
 
     if (role === 'user' && COACH_ONLY.includes(normalized)) {
@@ -107,39 +100,24 @@ export default function App() {
       setCurrentScreen('coach-home');
       return;
     }
-
     if (normalized === 'request-detail' && params?.id) {
       setRequestDetailId(params.id);
     }
-
-    // ★ 追加：新フローの videoId を保持
     if ((normalized === 'video-detail' || normalized === 'coach-advice-new') && params?.videoId) {
       setCurrentVideoId(params.videoId);
     }
-
     setCurrentScreen(normalized);
   };
 
   const handleNavigate = (screen: string, params?: any) => {
     switch (screen) {
       case 'home':
-        // 役割に応じたホームへ
         guardedSetScreen(getHomeScreen());
         break;
       default:
         guardedSetScreen(screen as Screen, params);
         break;
     }
-  };
-
-  const handleOpenReview = (review: Review) => {
-    setSelectedReview(review);
-    guardedSetScreen('review-player');
-  };
-
-  const handleOpenCoachReview = (id: string) => {
-    setCoachReviewRequestId(id);
-    guardedSetScreen('coach-review');
   };
 
   const renderWelcomeScreen = () => (
@@ -169,18 +147,17 @@ export default function App() {
           onClick={() => setCurrentScreen('signin')}
           className="w-full bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-800 font-semibold py-4 px-6 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
-          Sign in
+          ログイン
         </button>
         <button
-          onClick={() => setCurrentScreen('signup-name')}
+          onClick={() => setCurrentScreen('onboarding')}
           className="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-semibold py-4 px-6 rounded-full border-2 border-white border-opacity-50 transition-all duration-300 hover:border-opacity-80"
         >
-          Sign up
+          初めて登録の方
         </button>
       </div>
     </div>
   );
-
   const renderOnboardingScreen = () => {
     const onboardingData = [
       { step: 1, lines: ['Easy upload', 'your swing', 'video'], component: 'golfer' },
@@ -237,7 +214,7 @@ export default function App() {
           className="absolute right-0 top-0 w-1/2 h-full cursor-pointer"
           onClick={() => {
             if (onboardingStep < 2) setOnboardingStep(onboardingStep + 1);
-            else setCurrentScreen('signup');
+            else setCurrentScreen('signup-name'); // ★ signup ではなく signup-name に遷移
           }}
         />
       </OnboardingFrame>
@@ -253,7 +230,7 @@ export default function App() {
         >
           <ArrowLeft size={24} />
         </button>
-        <h3 className="text-xl font-semibold text-white">Sign In</h3>
+        <h3 className="text-xl font-semibold text-white">ログイン</h3>
         <div className="w-10" />
       </div>
 
@@ -277,10 +254,10 @@ export default function App() {
               />
             </div>
             <button
-              onClick={() => setCurrentScreen('onboarding')}
+              onClick={() => setCurrentScreen('home')}         // ★ onboarding経由せず homeへ直接
               className="w-full bg-white text-purple-600 font-semibold py-4 rounded-xl hover:bg-opacity-90 transition-colors shadow-lg"
             >
-              Sign In
+              ログイン
             </button>
           </div>
         </div>
@@ -297,44 +274,19 @@ export default function App() {
         >
           <ArrowLeft size={24} />
         </button>
-        <h3 className="text-xl font-semibold text-white">Sign Up</h3>
+        <h3 className="text-xl font-semibold text-white">新規登録</h3>
         <div className="w-10" />
       </div>
 
       <div className="flex-1 flex flex-col justify-center">
         <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-3xl p-8 border border-white border-opacity-20">
-          <div className="space-y-6">
-            <div>
-              <label className="block text-white text-sm font-medium mb-2">Full Name</label>
-              <input
-                type="text"
-                className="w-full bg-white bg-opacity-20 border border-white border-opacity-30 rounded-xl px-4 py-3 text-white placeholder-white placeholder-opacity-70 focus:outline-none focus:border-white focus:border-opacity-60"
-                placeholder="Enter your full name"
-              />
-            </div>
-            <div>
-              <label className="block text-white text-sm font-medium mb-2">Email</label>
-              <input
-                type="email"
-                className="w-full bg-white bg-opacity-20 border border-white border-opacity-30 rounded-xl px-4 py-3 text-white placeholder-white placeholder-opacity-70 focus:outline-none focus:border-white focus:border-opacity-60"
-                placeholder="Enter your email"
-              />
-            </div>
-            <div>
-              <label className="block text-white text-sm font-medium mb-2">Password</label>
-              <input
-                type="password"
-                className="w-full bg-white bg-opacity-20 border border-white border-opacity-30 rounded-xl px-4 py-3 text-white placeholder-white placeholder-opacity-70 focus:outline-none focus:border-white focus:border-opacity-60"
-                placeholder="Create a password"
-              />
-            </div>
-            <button
-              onClick={() => setCurrentScreen('signup-name')}
-              className="w-full bg-white text-purple-600 font-semibold py-4 rounded-xl hover:bg-opacity-90 transition-colors shadow-lg"
-            >
-              Sign Up
-            </button>
-          </div>
+          {/* 通常のSignUp画面が不要ならここ自体遷移させない運用でもOK */}
+          <button
+            onClick={() => setCurrentScreen('signup-name')}
+            className="w-full bg-white text-purple-600 font-semibold py-4 rounded-xl hover:bg-opacity-90 transition-colors shadow-lg"
+          >
+            登録を開始する
+          </button>
         </div>
       </div>
     </div>
@@ -403,7 +355,7 @@ export default function App() {
           value={nameData}
           onChange={setNameData}
           onNext={() => {
-            setRoleCandidate('user');          // 候補をユーザーに
+            setRoleCandidate('user');
             setCurrentScreen('signup-birth');
           }}
           onSelectCoach={() => {
@@ -439,7 +391,6 @@ export default function App() {
           value={mailData}
           onChange={setMailData}
           onNext={() => {
-            // ここで確実にユーザーロールを確定
             setRole('user');
             setCurrentScreen('home');
           }}
@@ -448,7 +399,7 @@ export default function App() {
       )}
 
       {currentScreen === 'home' && (
-        <HomeScreen onNavigate={handleNavigate} onOpenReview={handleOpenReview} />
+        <HomeScreen onNavigate={handleNavigate} onOpenReview={setSelectedReview} />
       )}
       {currentScreen === 'coach-home' && <CoachHome onNavigate={handleNavigate} />}
       {currentScreen === 'request' && <RequestScreen onNavigate={handleNavigate} />}
@@ -466,19 +417,11 @@ export default function App() {
 
       {currentScreen === 'mypage' && <MyPageScreen onNavigate={handleNavigate} />}
       {currentScreen === 'settings' && <SettingsScreen onNavigate={handleNavigate} />}
-      {currentScreen === 'settings-notifications' && (
-        <NotificationsScreen onNavigate={handleNavigate} />
-      )}
+      {currentScreen === 'settings-notifications' && <NotificationsScreen onNavigate={handleNavigate} />}
       {currentScreen === 'settings-plan' && <PlanScreen onNavigate={handleNavigate} />}
-      {currentScreen === 'settings-favorites' && (
-        <FavoritesScreen onNavigate={handleNavigate} />
-      )}
-      {currentScreen === 'settings-upload' && (
-        <UploadSettingsScreen onNavigate={handleNavigate} />
-      )}
-      {currentScreen === 'settings-storage' && (
-        <StorageScreen onNavigate={handleNavigate} />
-      )}
+      {currentScreen === 'settings-favorites' && <FavoritesScreen onNavigate={handleNavigate} />}
+      {currentScreen === 'settings-upload' && <UploadSettingsScreen onNavigate={handleNavigate} />}
+      {currentScreen === 'settings-storage' && <StorageScreen onNavigate={handleNavigate} />}
       {currentScreen === 'settings-help' && <HelpScreen onNavigate={handleNavigate} />}
       {currentScreen === 'settings-terms' && <TermsScreen onNavigate={handleNavigate} />}
       {currentScreen === 'settings-privacy' && <PrivacyScreen onNavigate={handleNavigate} />}
@@ -501,7 +444,7 @@ export default function App() {
           }}
           onProfile={() => {
             setRole('coach');
-            setCurrentScreen('mypage'); // ここで表示される内容は role=coach に依存
+            setCurrentScreen('mypage');
           }}
         />
       )}
@@ -517,10 +460,7 @@ export default function App() {
       )}
 
       {currentScreen === 'coach-jobs' && (
-        <CoachJobsScreen
-          onOpenCoachReview={handleOpenCoachReview}
-          onBack={() => setCurrentScreen('coach-home')}
-        />
+        <CoachJobsScreen onOpenCoachReview={(id) => { setCoachReviewRequestId(id); setCurrentScreen('coach-review'); }} onBack={() => setCurrentScreen('coach-home')} />
       )}
       {currentScreen === 'coach-review' && (
         <CoachReviewScreen
@@ -530,7 +470,6 @@ export default function App() {
         />
       )}
 
-      {/* ★ 新フロー：動画詳細 → 添削作成 */}
       {currentScreen === 'video-detail' && (
         <VideoDetail videoId={currentVideoId} onNavigate={handleNavigate} />
       )}

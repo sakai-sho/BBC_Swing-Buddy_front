@@ -47,6 +47,9 @@ import { ReviewTimelineScreen } from './screens/review/ReviewTimelineScreen';
 import { initAuth, setRole, setRoleCandidate, getHomeScreen, getAuth } from './state/auth';
 import type { Review } from './types/review';
 
+import { RequestConfirmScreen } from './screens/RequestConfirmScreen';
+
+
 // ★ 追加：コーチ新フロー
 import VideoDetail from './screens/videos/VideoDetail';
 import AdviceNew from './screens/coach/AdviceNew';
@@ -83,6 +86,14 @@ export default function App() {
   const [genderData, setGenderData] = useState<'male' | 'female' | ''>('');
   const [mailData, setMailData] = useState('');
   const [currentVideoId, setCurrentVideoId] = useState<string>('');
+// ★追加：依頼プレビュー用draft
+const [requestDraft, setRequestDraft] = useState({
+  videoThumb: '',
+  club: '',
+  problems: [] as string[],
+  note: ''
+});
+
 
   useEffect(() => {
     initAuth();
@@ -405,14 +416,42 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'home' && (
-        <HomeScreen onNavigate={handleNavigate} onOpenReview={handleOpenReview} />
-      )}
-      {currentScreen === 'coach-home' && <CoachHome onNavigate={handleNavigate} />}
-      {currentScreen === 'request' && <RequestScreen onNavigate={handleNavigate} />}
-      {currentScreen === 'request-club' && <RequestClubScreen onNavigate={handleNavigate} />}
-      {currentScreen === 'request-problem' && <RequestProblemScreen onNavigate={handleNavigate} />}
-      {currentScreen === 'request-done' && <RequestDoneScreen onNavigate={handleNavigate} />}
+{currentScreen === 'home' && (
+  <HomeScreen onNavigate={handleNavigate} onOpenReview={handleOpenReview} />
+)}
+{currentScreen === 'coach-home' && <CoachHome onNavigate={handleNavigate} />}
+{currentScreen === 'request' && <RequestScreen onNavigate={handleNavigate} />}
+
+{currentScreen === 'request-club' && (
+  <RequestClubScreen
+    onNavigate={handleNavigate}
+    onSaveDraft={({ club }) => setRequestDraft((prev) => ({ ...prev, club }))}
+  />
+)}
+
+{currentScreen === 'request-problem' && (
+  <RequestProblemScreen
+    onNavigate={handleNavigate}
+    onSaveDraft={({ problems, note }) =>
+      setRequestDraft((prev) => ({ ...prev, problems, note }))
+    }
+  />
+)}
+
+{currentScreen === 'request-confirm' && (
+  <RequestConfirmScreen
+    videoThumb={requestDraft.videoThumb}
+    club={requestDraft.club}
+    problems={requestDraft.problems}
+    note={requestDraft.note}
+    onNavigate={handleNavigate}
+  />
+)}
+
+{currentScreen === 'request-done' && (
+  <RequestDoneScreen onNavigate={handleNavigate} />
+)}
+
 
       {currentScreen === 'request-detail' && (
         <RequestDetail
@@ -434,6 +473,8 @@ export default function App() {
       {currentScreen === 'settings-privacy' && <PrivacyScreen onNavigate={handleNavigate} />}
       {currentScreen === 'settings-appinfo' && <AppInfoScreen onNavigate={handleNavigate} />}
       {currentScreen === 'settings-rate' && <RateScreen onNavigate={handleNavigate} />}
+
+
 
       {currentScreen === 'coach-signup' && (
         <CoachSignupMain

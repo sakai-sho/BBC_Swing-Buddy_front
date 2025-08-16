@@ -73,13 +73,13 @@ const VoiceRecorder: React.FC<Props> = ({ value, onChange, label }) => {
       {!audioUrl ? (
         <div className="flex items-center gap-3">
           {!recording ? (
-            <button onClick={start} className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 flex items-center gap-2">
-              <Mic size={18} />
+            <button onClick={start} className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 flex items-center gap-2 text-xs">
+              <Mic size={20} />
               録音開始
             </button>
           ) : (
             <button onClick={stop} className="px-3 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 flex items-center gap-2">
-              <StopCircle size={18} />
+              <StopCircle size={20} />
               停止
             </button>
           )}

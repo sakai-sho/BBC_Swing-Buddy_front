@@ -8,230 +8,236 @@ interface FilterBarProps {
   onReset: () => void;
 }
 
+// === 選択肢 ===
 const CLUBS: { value: Club | 'all'; label: string }[] = [
-  { value: 'all', label: '全て' },
+  { value: 'all', label: 'すべてのクラブ' },
   { value: 'driver', label: 'ドライバー' },
   { value: 'wood', label: 'ウッド' },
   { value: 'utility', label: 'ユーティリティ' },
   { value: 'iron', label: 'アイアン' },
   { value: 'wedge', label: 'ウェッジ' },
-  { value: 'putter', label: 'パター' }
+  { value: 'putter', label: 'パター' },
 ];
 
 const TAGS = [
-  'スライス', 'フック', 'トップ', 'ダフリ', '方向性', '弾道の高さ', 
-  'リズム', 'ミート率', '飛距離不足', 'スピン量'
+  'スライス', 'フック', 'トップ', 'ダフリ', '方向性', '弾道の高さ',
+  'リズム', 'ミート率', '飛距離不足', 'スピン量',
 ];
 
 const PERIODS = [
   { value: 'all', label: '全期間' },
-  { value: '24h', label: '24時間' },
-  { value: '3d', label: '3日間' },
-  { value: '7d', label: '7日間' }
+  { value: '24h', label: '直近24時間' },
+  { value: '3d', label: '直近3日' },
+  { value: '7d', label: '直近7日' },
 ] as const;
 
-const SORTS = [
-  { value: 'newest', label: '新着順' },
-  { value: 'most_requests', label: '依頼数多い' },
-  { value: 'highest_reward', label: '報酬高い' }
-] as const;
+// 開いているメニューを一元管理（同時オープンを防ぐ）
+type OpenMenu = 'club' | 'tag' | 'history' | null;
 
 export const FilterBar: React.FC<FilterBarProps> = ({
   filters,
   onFiltersChange,
-  onReset
+  onReset,
 }) => {
-  const [showClubDropdown, setShowClubDropdown] = useState(false);
-  const [showTagsDropdown, setShowTagsDropdown] = useState(false);
-  const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
-  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
 
-  const toggleTag = (tag: string) => {
-    const newTags = filters.tags.includes(tag)
-      ? filters.tags.filter(t => t !== tag)
-      : [...filters.tags, tag];
-    onFiltersChange({ tags: newTags });
+  const toggle = (menu: OpenMenu) => {
+    setOpenMenu(prev => (prev === menu ? null : menu));
   };
 
-  const hasActiveFilters = 
-    filters.club !== 'all' || 
-    filters.tags.length > 0 || 
-    filters.period !== 'all' || 
+  const toggleTag = (tag: string) => {
+    const next = filters.tags.includes(tag)
+      ? filters.tags.filter(t => t !== tag)
+      : [...filters.tags, tag];
+    onFiltersChange({ tags: next });
+  };
+
+  const hasActive =
+    filters.club !== 'all' ||
+    filters.tags.length > 0 ||
+    filters.period !== 'all' ||
     filters.sort !== 'newest' ||
     filters.search !== '';
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm border-b border-white/10 p-4 space-y-3">
-      {/* Filter buttons row */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {/* Club filter */}
-        <div className="relative">
+    // relative: ドロップダウンの基準。z-10 以上で下の動画より前面へ。
+    <div className="relative z-20 bg-white/5 backdrop-blur-sm border-b border-white/10">
+      {/* 上段：3等分グリッド（中央揃え・等間隔・折り返し禁止） */}
+      <div className="px-4 py-3">
+        <div className="grid grid-cols-3 gap-3">
           <button
-            onClick={() => setShowClubDropdown(!showClubDropdown)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-              filters.club !== 'all'
+            onClick={() => toggle('club')}
+            className={`flex h-12 items-center justify-center gap-2 rounded-xl text-sm font-semibold
+              whitespace-nowrap leading-none
+              ${openMenu === 'club' || filters.club !== 'all'
                 ? 'bg-purple-600 text-white'
-                : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
+                : 'bg-white/10 text-white hover:bg-white/20'}
+            `}
           >
-            {CLUBS.find(c => c.value === filters.club)?.label}
-            <ChevronDown size={16} className={showClubDropdown ? 'rotate-180' : ''} />
+            <span>クラブタグ</span>
+            <ChevronDown size={16} className={openMenu === 'club' ? 'rotate-180 transition-transform' : 'transition-transform'} />
           </button>
-          
-          {showClubDropdown && (
-            <div className="absolute top-full left-0 mt-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg py-1 z-10 min-w-[120px]">
-              {CLUBS.map(club => (
+
+          <button
+            onClick={() => toggle('tag')}
+            className={`flex h-12 items-center justify-center gap-2 rounded-xl text-sm font-semibold
+              whitespace-nowrap leading-none
+              ${openMenu === 'tag' || filters.tags.length > 0
+                ? 'bg-purple-600 text-white'
+                : 'bg-white/10 text-white hover:bg-white/20'}
+            `}
+          >
+            <span>課題タグ</span>
+            {filters.tags.length > 0 && (
+              <span className="text-xs opacity-80">({filters.tags.length})</span>
+            )}
+            <ChevronDown size={16} className={openMenu === 'tag' ? 'rotate-180 transition-transform' : 'transition-transform'} />
+          </button>
+
+          <button
+            onClick={() => toggle('history')}
+            className={`flex h-12 items-center justify-center gap-2 rounded-xl text-sm font-semibold
+              whitespace-nowrap leading-none
+              ${openMenu === 'history' || filters.period !== 'all'
+                ? 'bg-purple-600 text-white'
+                : 'bg-white/10 text-white hover:bg-white/20'}
+            `}
+          >
+            <span>依頼履歴</span>
+            <ChevronDown size={16} className={openMenu === 'history' ? 'rotate-180 transition-transform' : 'transition-transform'} />
+          </button>
+        </div>
+
+        {/* アクティブタグ表示（必要なら残す） */}
+        {filters.tags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {filters.tags.map(tag => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-purple-600 text-white text-xs rounded-full"
+              >
+                {tag}
                 <button
-                  key={club.value}
-                  onClick={() => {
-                    onFiltersChange({ club: club.value });
-                    setShowClubDropdown(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-white/10 transition-colors ${
-                    filters.club === club.value ? 'text-purple-400' : 'text-white'
-                  }`}
+                  onClick={() => toggleTag(tag)}
+                  className="hover:bg-white/20 rounded-full p-0.5"
+                  aria-label={`${tag} を外す`}
                 >
-                  {club.label}
+                  <X size={12} />
                 </button>
-              ))}
-            </div>
-          )}
-        </div>
+              </span>
+            ))}
+          </div>
+        )}
 
-        {/* Tags filter */}
-        <div className="relative">
-          <button
-            onClick={() => setShowTagsDropdown(!showTagsDropdown)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-              filters.tags.length > 0
-                ? 'bg-purple-600 text-white'
-                : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
-          >
-            課題タグ {filters.tags.length > 0 && `(${filters.tags.length})`}
-            <ChevronDown size={16} className={showTagsDropdown ? 'rotate-180' : ''} />
-          </button>
-          
-          {showTagsDropdown && (
-            <div className="absolute top-full left-0 mt-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-2 z-10 w-64">
-              <div className="grid grid-cols-2 gap-1">
-                {TAGS.map(tag => (
-                  <button
-                    key={tag}
-                    onClick={() => toggleTag(tag)}
-                    className={`text-left px-2 py-1 text-xs rounded transition-colors ${
-                      filters.tags.includes(tag)
-                        ? 'bg-purple-600 text-white'
-                        : 'text-white hover:bg-white/10'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Period filter */}
-        <div className="relative">
-          <button
-            onClick={() => setShowPeriodDropdown(!showPeriodDropdown)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-              filters.period !== 'all'
-                ? 'bg-purple-600 text-white'
-                : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
-          >
-            {PERIODS.find(p => p.value === filters.period)?.label}
-            <ChevronDown size={16} className={showPeriodDropdown ? 'rotate-180' : ''} />
-          </button>
-          
-          {showPeriodDropdown && (
-            <div className="absolute top-full left-0 mt-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg py-1 z-10 min-w-[100px]">
-              {PERIODS.map(period => (
-                <button
-                  key={period.value}
-                  onClick={() => {
-                    onFiltersChange({ period: period.value });
-                    setShowPeriodDropdown(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-white/10 transition-colors ${
-                    filters.period === period.value ? 'text-purple-400' : 'text-white'
-                  }`}
-                >
-                  {period.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Sort filter */}
-        <div className="relative">
-          <button
-            onClick={() => setShowSortDropdown(!showSortDropdown)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-              filters.sort !== 'newest'
-                ? 'bg-purple-600 text-white'
-                : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
-          >
-            {SORTS.find(s => s.value === filters.sort)?.label}
-            <ChevronDown size={16} className={showSortDropdown ? 'rotate-180' : ''} />
-          </button>
-          
-          {showSortDropdown && (
-            <div className="absolute top-full left-0 mt-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg py-1 z-10 min-w-[120px]">
-              {SORTS.map(sort => (
-                <button
-                  key={sort.value}
-                  onClick={() => {
-                    onFiltersChange({ sort: sort.value });
-                    setShowSortDropdown(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-white/10 transition-colors ${
-                    filters.sort === sort.value ? 'text-purple-400' : 'text-white'
-                  }`}
-                >
-                  {sort.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Reset button */}
-        {hasActiveFilters && (
-          <button
-            onClick={onReset}
-            className="flex items-center gap-1 px-3 py-2 bg-red-500/20 text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/30 transition-colors whitespace-nowrap"
-          >
-            <X size={16} />
-            リセット
-          </button>
+        {/* リセット */}
+        {hasActive && (
+          <div className="mt-2">
+            <button
+              onClick={onReset}
+              className="inline-flex items-center gap-1 px-3 py-2 bg-red-500/20 text-red-200 rounded-lg text-xs font-medium hover:bg-red-500/30"
+            >
+              <X size={14} />
+              フィルターをリセット
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Active tags display */}
-      {filters.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {filters.tags.map(tag => (
-            <span
-              key={tag}
-              className="inline-flex items-center gap-1 px-2 py-1 bg-purple-600 text-white text-xs rounded-full"
-            >
-              {tag}
-              <button
-                onClick={() => toggleTag(tag)}
-                className="hover:bg-white/20 rounded-full p-0.5"
-              >
-                <X size={12} />
-              </button>
-            </span>
-          ))}
-        </div>
+      {/* ===== ドロップダウン（全幅） ===== */}
+      {openMenu && (
+        <>
+          {/* 背景の半透明レイヤー（クリックで閉じる） */}
+          <button
+            onClick={() => setOpenMenu(null)}
+            className="fixed inset-0 z-40 bg-black/40"
+            aria-label="メニューを閉じる"
+          />
+
+          {/* メニュー本体（バー直下・全幅・前面表示） */}
+          <div className="absolute left-0 right-0 top-full z-50 px-4 pb-3">
+            <div className="mt-2 rounded-2xl border border-white/15 bg-[#261045]/90 backdrop-blur-xl shadow-2xl">
+              {/* クラブタグ */}
+              {openMenu === 'club' && (
+                <div className="p-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    {CLUBS.map(c => (
+                      <button
+                        key={c.value}
+                        onClick={() => {
+                          onFiltersChange({ club: c.value });
+                          setOpenMenu(null);
+                        }}
+                        className={`w-full rounded-lg px-3 py-2 text-sm text-left
+                          ${filters.club === c.value
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-white/10 text-white hover:bg-white/20'}`}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 課題タグ */}
+              {openMenu === 'tag' && (
+                <div className="p-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    {TAGS.map(tag => {
+                      const active = filters.tags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => toggleTag(tag)}
+                          className={`w-full rounded-lg px-3 py-2 text-sm text-left
+                            ${active
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-white/10 text-white hover:bg-white/20'}`}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 text-right">
+                    <button
+                      onClick={() => setOpenMenu(null)}
+                      className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-3 py-2 text-xs text-white hover:bg-white/20"
+                    >
+                      閉じる
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 依頼履歴（期間） */}
+              {openMenu === 'history' && (
+                <div className="p-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    {PERIODS.map(p => (
+                      <button
+                        key={p.value}
+                        onClick={() => {
+                          onFiltersChange({ period: p.value });
+                          setOpenMenu(null);
+                        }}
+                        className={`w-full rounded-lg px-3 py-2 text-sm text-left
+                          ${filters.period === p.value
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-white/10 text-white hover:bg-white/20'}`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
 };
+
+export default FilterBar;

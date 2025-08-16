@@ -17,3 +17,6 @@ export const VIDEO_THUMBS: Record<string, string> = {
   '6': '/media/thumbs/6.jpg',
   // 追加したくなったらここに増やすだけ
 };
+
+export const DEMO_THUMB = '/media/default_thumb.jpg';
+

@@ -1,35 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Search,
-  Settings as SettingsIcon,
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Settings as SettingsIcon } from 'lucide-react';
 
-export type RequestClubProps = { 
+export type RequestClubProps = {
   onNavigate: (screen: string) => void;
+  onSaveDraft: (draft: { club: string }) => void; // ★追加
 };
 
 type Club = 'Driver' | 'Wood' | 'Utility' | 'Iron' | 'Wedge' | 'Patter';
 
-export const RequestClubScreen: React.FC<RequestClubProps> = ({ onNavigate }) => {
-  const [club, setClub] = useState<Club | ''>(() => {
-    const saved = localStorage.getItem('sb:req:club');
-    return (saved && ['Driver', 'Wood', 'Utility', 'Iron', 'Wedge', 'Patter'].includes(saved))
-      ? saved as Club 
-      : '';
-  });
+export const RequestClubScreen: React.FC<RequestClubProps> = ({ onNavigate, onSaveDraft }) => {
+  const [club, setClub] = useState<Club | ''>('');
 
   const handleClubSelect = (selectedClub: Club) => {
     setClub(selectedClub);
-    localStorage.setItem('sb:req:club', selectedClub);
   };
 
   const handleNext = () => {
     if (club) {
-      onNavigate('request-problem');
+      onSaveDraft({ club });          // ★選んだクラブをドラフトに保存
+      onNavigate('request-problem');  // → 次画面へ
     }
   };
 
   const clubs: Club[] = ['Driver', 'Wood', 'Utility', 'Iron', 'Wedge', 'Patter'];
+
 
   return (
     <div className="max-w-[430px] mx-auto bg-white min-h-100dvh h-100dvh shadow-2xl rounded-[28px] overflow-hidden relative">

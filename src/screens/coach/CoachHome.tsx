@@ -6,6 +6,7 @@ import { FilterBar } from '../../components/requests/FilterBar';
 import { useCoachRequests } from '../../state/coachRequests';
 import { acceptRequest, declineRequest, toggleFavorite, markAsRead } from '../../services/requests';
 import type { RequestStatus } from '../../types/requests';
+import { useEffect } from 'react';
 
 const HOME_BG_IMG = '/images/bg.jpg';                 // => public/images/bg.jpg
 const PROFILE_AVATAR_IMG = '/media/coach/avatar_dummy.jpg'; // => public/media/coach/avatar_dummy.jpg
@@ -30,6 +31,15 @@ export const CoachHome: React.FC<CoachHomeProps> = ({ onNavigate }) => {
     resetFilters,
     refreshRequests
   } = useCoachRequests();
+
+
+// ...
+
+useEffect(() => {
+  // 画面表示時に必ずタブを 'new' にリセット
+  updateFilters({ status: 'new' });
+}, []);
+
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(filters.search);

@@ -27,8 +27,8 @@ const MOCK_REQUESTS: RequestItem[] = [
     // ▼ アバターを public 配下の静止画に変更（例）
     userAvatar: '/media/users/u001.jpg',
     level: 'intermediate',
-    club: 'iron',
-    tags: ['フック', 'ミート率'],
+    club: 'driver',
+    tags: ['スライス', '方向性'],
     createdAt: '2025-01-10T23:34:00Z',
     durationSec: 60,
     reward: { kind: 'yen', amount: 3000 },
@@ -37,62 +37,11 @@ const MOCK_REQUESTS: RequestItem[] = [
     commentsCount: 60,
     status: 'new',
     isFavorite: true,
-    description: '7番アイアンでフックが強く出ます。ミート率を上げたいです。',
+    description: 'ロングアイアンやドライバーでスライスが強く出て狙った方向へ行かないです。カット軌道を改善したいです。',
     environment: 'indoor',
     handedness: 'right'
   },
-  {
-    id: '3',
-    userHandle: 'taro',
-    userAvatar: 'https://images.pexels.com/photos/1325735/pexels-photo-1325735.jpeg?auto=compress&cs=tinysrgb&w=100',
-    level: 'beginner',
-    club: 'driver',
-    tags: ['ダフリ', '弾道の高さ'],
-    createdAt: '2025-01-10T13:07:00Z',
-    durationSec: 38,
-    reward: { kind: 'ticket', amount: 1 },
-    thumbnailUrl: 'https://images.pexels.com/photos/1325735/pexels-photo-1325735.jpeg?auto=compress&cs=tinysrgb&w=400',
-    commentsCount: 2,
-    status: 'accepted',
-    description: 'ドライバーでダフリが多く、弾道が低いです。',
-    environment: 'outdoor',
-    handedness: 'left',
-    deadline: '2025-01-12T13:07:00Z'
-  },
-  {
-    id: '4',
-    userHandle: 'keiji',
-    userAvatar: 'https://images.pexels.com/photos/1325735/pexels-photo-1325735.jpeg?auto=compress&cs=tinysrgb&w=100',
-    level: 'advanced',
-    club: 'wedge',
-    tags: ['トップ', 'リズム'],
-    createdAt: '2025-01-09T09:37:00Z',
-    durationSec: 52,
-    reward: { kind: 'yen', amount: 5000 },
-    thumbnailUrl: 'https://images.pexels.com/photos/1325735/pexels-photo-1325735.jpeg?auto=compress&cs=tinysrgb&w=400',
-    commentsCount: 2,
-    status: 'completed',
-    description: 'ウェッジでトップが出やすく、リズムが安定しません。',
-    environment: 'outdoor',
-    handedness: 'right'
-  },
-  {
-    id: '5',
-    userHandle: 'keiji',
-    userAvatar: 'https://images.pexels.com/photos/1325735/pexels-photo-1325735.jpeg?auto=compress&cs=tinysrgb&w=100',
-    level: 'intermediate',
-    club: 'utility',
-    tags: ['スライス', '方向性'],
-    createdAt: '2025-01-08T15:22:00Z',
-    durationSec: 41,
-    reward: { kind: 'ticket', amount: 2 },
-    thumbnailUrl: 'https://images.pexels.com/photos/1325735/pexels-photo-1325735.jpeg?auto=compress&cs=tinysrgb&w=400',
-    commentsCount: 8,
-    status: 'new',
-    description: '3番ユーティリティで方向性が安定しません。',
-    environment: 'outdoor',
-    handedness: 'right'
-  }
+
 ];
 
 // Simulate API delay

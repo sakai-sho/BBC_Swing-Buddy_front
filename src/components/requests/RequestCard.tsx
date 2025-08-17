@@ -170,9 +170,16 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         {request.status === 'new' && (
           <div className="flex gap-2">
             <button
-              onClick={() => onAccept(request.id)}
+              onClick={() => onViewDetail(request.id)}
               disabled={loading}
               className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+            >
+              案件詳細
+            </button>
+            <button
+              onClick={() => onAccept(request.id)}
+              disabled={loading}
+              className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors disabled:opacity-50"
             >
               受諾
             </button>
@@ -183,12 +190,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             >
               辞退
             </button>
-            <button
-              onClick={() => onViewDetail(request.id)}
-              className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
-            >
-              詳細
-            </button>
+
           </div>
         )}
         

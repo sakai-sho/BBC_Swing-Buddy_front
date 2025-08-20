@@ -2,7 +2,7 @@ import React from 'react';
 
 interface StepTextProps {
   step: number;
-  lines: string[];
+  lines: readonly string[]; // ここを 'readonly string[]' に修正
   alignment?: 'left' | 'right';
   className?: string;
 }

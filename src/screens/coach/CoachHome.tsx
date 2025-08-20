@@ -1,12 +1,11 @@
 'use client';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react'; // useEffect を import
 import { Search, Bell, Loader2 } from 'lucide-react';
 import { RequestCard } from '../../components/requests/RequestCard';
 import { FilterBar } from '../../components/requests/FilterBar';
 import { useCoachRequests } from '../../state/coachRequests';
 import { acceptRequest, declineRequest, toggleFavorite, markAsRead } from '../../services/requests';
 import type { RequestStatus } from '../../types/requests';
-import { useEffect } from 'react';
 
 const HOME_BG_IMG = '/images/bg.jpg';                 // => public/images/bg.jpg
 const PROFILE_AVATAR_IMG = '/media/coach/avatar_dummy.jpg'; // => public/media/coach/avatar_dummy.jpg
@@ -33,12 +32,11 @@ export const CoachHome: React.FC<CoachHomeProps> = ({ onNavigate }) => {
   } = useCoachRequests();
 
 
-// ...
-
-useEffect(() => {
-  // 画面表示時に必ずタブを 'new' にリセット
-  updateFilters({ status: 'new' });
-}, []);
+  // 修正箇所: useEffect の依存配列に 'updateFilters' を追加
+  useEffect(() => {
+    // 画面表示時に必ずタブを 'new' にリセット
+    updateFilters({ status: 'new' });
+  }, [updateFilters]); // updateFilters を依存配列に追加
 
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -113,7 +111,7 @@ useEffect(() => {
     } else {
       onNavigate('request-detail', { id });         // videoId 不明 → 従来詳細
     }
-  }, [onNavigate, requests]);
+  }, [onNavigate, requests]); // requests を依存配列に追加
 
   const unreadCount = requests.filter(r => r.unread).length;
 
@@ -139,7 +137,8 @@ useEffect(() => {
             className="w-10 h-10 rounded-full overflow-hidden bg-white/20 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/50"
             aria-label="マイページを開く"
           >
-            <img src={PROFILE_AVATAR_IMG} alt="Profile" className="w-full h-full object-cover" />
+            {/* img タグの代わりに Next.js の Image コンポーネントの使用を検討 */}
+            <img src={PROFILE_AVATAR_IMG} alt="プロフィールアバター" className="w-full h-full object-cover" />
           </button>
 
           {/* Search */}
@@ -207,7 +206,7 @@ useEffect(() => {
               <p className="text-red-200 mb-4">{error}</p>
               <button
                 onClick={refreshRequests}
-                className="px-4 py-2 bg白/20 text白 rounded-lg hover:bg白/30 transition-colors"
+                className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
               >
                 再試行
               </button>

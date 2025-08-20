@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react'; // useCallback をインポート
 import {
   Eraser, Pencil, Minus, MoveRight, Square, Circle,
   RotateCcw, RotateCw, Download,
@@ -32,77 +32,13 @@ const SnapshotAnnotator: React.FC<Props> = ({ src, time, onChange }) => {
   const [stack, setStack] = useState<DrawCmd[]>([]);
   const [redoStack, setRedoStack] = useState<DrawCmd[]>([]);
 
-  // 画像読み込み
-  useEffect(() => {
-    const i = new Image();
-    i.onload = () => setImg(i);
-    i.src = src;
-  }, [src]);
-
-  // リサイズ & 初期描画設定
-  useEffect(() => {
-    if (!img) return;
-    dprRef.current = window.devicePixelRatio || 1;
-
-    const resizeAndRedraw = () => {
-      const outer = baseRef.current?.parentElement?.parentElement as HTMLElement | null;
-      const container = outer ?? baseRef.current?.parentElement ?? document.body;
-      const containerWidth = container ? container.clientWidth : 360;
-      const aspect = img.height / img.width;
-      const targetCssW = Math.min(containerWidth, 1000);
-      const targetCssH = Math.min(Math.floor(targetCssW * aspect), Math.floor(window.innerHeight * 0.6));
-
-      setCssW(targetCssW);
-      setCssH(targetCssH);
-
-      // canvasへ反映
-      [baseRef.current, tmpRef.current].forEach((cvs) => {
-        if (!cvs) return;
-        cvs.width  = Math.floor(targetCssW * dprRef.current);
-        cvs.height = Math.floor(targetCssH * dprRef.current);
-        cvs.style.width  = `${targetCssW}px`;
-        cvs.style.height = `${targetCssH}px`;
-      });
-
-      redrawAll(targetCssW, targetCssH);
-    };
-
-    resizeAndRedraw();
-    const ro = new ResizeObserver(resizeAndRedraw);
-    const observeTarget = baseRef.current?.parentElement?.parentElement ?? baseRef.current?.parentElement ?? undefined;
-    if (observeTarget) ro.observe(observeTarget);
-    window.addEventListener('resize', resizeAndRedraw);
-    return () => { ro.disconnect(); window.removeEventListener('resize', resizeAndRedraw); };
-  }, [img]);
-
-  useEffect(() => {
-    if (cssW && cssH) redrawAll(cssW, cssH);
-  }, [stack]);
-
-  const redrawAll = (w: number, h: number) => {
-    if (!img || !baseRef.current) return;
-    const b = baseRef.current;
-    const ctx = b.getContext('2d')!;
-    const dpr = dprRef.current;
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, b.width, b.height);
-    ctx.scale(dpr, dpr);
-    ctx.drawImage(img, 0, 0, w, h);
-
-    for (const cmd of stack) drawCmd(ctx, cmd);
-    if (tmpRef.current) {
-      const t = tmpRef.current.getContext('2d')!;
-      tmpRef.current.width = tmpRef.current.width;
-      t.scale(dpr, dpr);
-    }
-  };
-
-  const drawCmd = (ctx: CanvasRenderingContext2D, cmd: DrawCmd) => {
+  // Helper function to draw a single command onto a context
+  // drawCmd は自身が依存する状態 (tool, color, width) を持たないため、依存配列は空でOK
+  const drawCmd = useCallback((ctx: CanvasRenderingContext2D, cmd: DrawCmd) => {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.lineWidth = cmd.width;
-    ctx.strokeStyle = cmd.t === 'erase' ? 'rgba(0,0,0,1)' : cmd.color;
+    ctx.strokeStyle = cmd.t === 'erase' ? 'rgba(0,0,0,1)' : cmd.color; // Eraser uses transparent overlay
     ctx.globalCompositeOperation = cmd.t === 'erase' ? 'destination-out' : 'source-over';
 
     const line = (a: [number, number], b: [number, number]) => {
@@ -134,14 +70,95 @@ const SnapshotAnnotator: React.FC<Props> = ({ src, time, onChange }) => {
       }
     }
     ctx.globalCompositeOperation = 'source-over';
-  };
+  }, []);
+
+  // All drawing commands on base canvas (memoized)
+  const redrawAll = useCallback(() => {
+    if (!img || !baseRef.current) return;
+    const b = baseRef.current;
+    const ctx = b.getContext('2d')!;
+    const dpr = dprRef.current;
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, b.width, b.height);
+    ctx.scale(dpr, dpr);
+    ctx.drawImage(img, 0, 0, cssW, cssH); // Use state cssW, cssH
+
+    for (const cmd of stack) drawCmd(ctx, cmd); // drawCmd は useCallback なので依存配列に追加
+    if (tmpRef.current) {
+      const t = tmpRef.current.getContext('2d')!;
+      tmpRef.current.width = tmpRef.current.width;
+      t.scale(dpr, dpr);
+    }
+  }, [img, cssW, cssH, stack, drawCmd]); // redrawAll の依存関係
+
+  // Image loading
+  useEffect(() => {
+    const i = new Image();
+    i.onload = () => setImg(i);
+    i.src = src;
+  }, [src]);
+
+  // Resize handler, sets cssW, cssH, and updates canvas dimensions
+  const resizeAndSetCanvasDimensions = useCallback(() => {
+    if (!img || !baseRef.current) return; // baseRef.current もここでチェック
+    dprRef.current = window.devicePixelRatio || 1; // ここで dprRef.current を更新
+
+    const outer = baseRef.current.parentElement?.parentElement as HTMLElement | null;
+    const container = outer ?? baseRef.current.parentElement ?? document.body;
+    const containerWidth = container ? container.clientWidth : 360;
+    const aspect = img.height / img.width;
+    const targetCssW = Math.min(containerWidth, 1000);
+    const targetCssH = Math.min(Math.floor(targetCssW * aspect), Math.floor(window.innerHeight * 0.6));
+
+    setCssW(targetCssW);
+    setCssH(targetCssH);
+
+    // Apply dimensions to canvas elements
+    [baseRef.current, tmpRef.current].forEach((cvs) => {
+      if (!cvs) return;
+      cvs.width  = Math.floor(targetCssW * dprRef.current);
+      cvs.height = Math.floor(targetCssH * dprRef.current);
+      cvs.style.width  = `${targetCssW}px`;
+      cvs.style.height = `${targetCssH}px`;
+    });
+  }, [img]); // img が変更されたときにこの関数を再作成
+
+  // Effect for initial resize and attaching resize observers
+  useEffect(() => {
+    resizeAndSetCanvasDimensions(); // 初回実行
+    const ro = new ResizeObserver(resizeAndSetCanvasDimensions);
+    const observeTarget = baseRef.current?.parentElement?.parentElement ?? baseRef.current?.parentElement ?? undefined;
+    if (observeTarget) ro.observe(observeTarget);
+    window.addEventListener('resize', resizeAndSetCanvasDimensions);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', resizeAndSetCanvasDimensions);
+    };
+  }, [resizeAndSetCanvasDimensions]); // resizeAndSetCanvasDimensions が変更されたときに再実行
+
+  // Effect to redraw when cssW, cssH, or stack changes
+  useEffect(() => {
+    if (cssW && cssH) {
+      redrawAll(); // Memoized redrawAll を呼び出す
+    }
+  }, [cssW, cssH, stack, redrawAll]); // 全ての依存関係を明示的に含める
 
   const ev2pt = (e: React.MouseEvent): [number, number] => {
     const rect = baseRef.current!.getBoundingClientRect();
     return [e.clientX - rect.left, e.clientY - rect.top];
   };
 
-  const onDown = (e: React.MouseEvent) => {
+  const drawPreview = useCallback((ctx: CanvasRenderingContext2D, from: [number, number], to: [number, number]) => {
+    // 以前に修正済みの条件式
+    const cmd: DrawCmd = (tool === 'pen' || tool === 'erase')
+      ? { t: tool, color, width, points: [from, to] }
+      : { t: tool, color, width, from, to };
+    drawCmd(ctx, cmd);
+  }, [tool, color, width, drawCmd]); // drawCmd も依存関係に追加
+
+  const onDown = useCallback((e: React.MouseEvent) => {
     setDrawing(true);
     const p = ev2pt(e);
     startPos.current = p;
@@ -151,21 +168,28 @@ const SnapshotAnnotator: React.FC<Props> = ({ src, time, onChange }) => {
     tmpRef.current!.width = tmpRef.current!.width;
     t.scale(dprRef.current, dprRef.current);
     drawPreview(t, p, p);
-  };
-  const onMove = (e: React.MouseEvent) => {
+  }, [dprRef, drawPreview]); // dprRef も依存関係に追加
+
+  const onMove = useCallback((e: React.MouseEvent) => {
     if (!drawing) return;
     const p = ev2pt(e);
     const t = tmpRef.current!.getContext('2d')!;
     tmpRef.current!.width = tmpRef.current!.width;
     t.scale(dprRef.current, dprRef.current);
-    drawPreview(t, startPos.current!, p);
+    drawPreview(t, startPos.current!, p); // drawPreview は現在の描画を表示
+
     if (tool === 'pen' || tool === 'erase') {
+      // ペンや消しゴムは連続的な描画なので、直接 baseRef に描画
       penPts.current.push(p);
       const ctx = baseRef.current!.getContext('2d')!;
+      // drawCmd を直接呼び出す場合は、ctx のスケール設定に注意
+      ctx.scale(dprRef.current, dprRef.current); // 描画前にスケールを設定
       drawCmd(ctx, { t: tool, color, width, points: [penPts.current.at(-2)!, p] });
+      ctx.scale(1/dprRef.current, 1/dprRef.current); // 描画後にスケールをリセット
     }
-  };
-  const onUp = (e: React.MouseEvent) => {
+  }, [drawing, tool, color, width, drawPreview, dprRef, drawCmd]);
+
+  const onUp = useCallback((e: React.MouseEvent) => {
     if (!drawing) return;
     setDrawing(false);
     const p = ev2pt(e);
@@ -175,23 +199,25 @@ const SnapshotAnnotator: React.FC<Props> = ({ src, time, onChange }) => {
         : { t: tool, color, width, from: startPos.current!, to: p };
     setStack((s) => [...s, cmd]); setRedoStack([]);
     if (tmpRef.current) tmpRef.current.width = tmpRef.current.width;
-  };
+  }, [drawing, tool, color, width]); // startPos.current, penPts.current は ref なので依存配列には不要
 
-  const drawPreview = (ctx: CanvasRenderingContext2D, from: [number, number], to: [number, number]) => {
-    const cmd: DrawCmd = (tool === 'pen' || tool === 'erase')
-      ? { t: tool, color, width, points: [from, to] }
-      : { t: tool, color, width, from, to };
-    drawCmd(ctx, cmd);
-  };
+  const undo = useCallback(() => {
+    setStack((s) => (s.length ? (setRedoStack(r => [...r, s[s.length-1]]), s.slice(0, -1)) : s));
+  }, []); // 依存関係なし
 
-  const undo = () => setStack((s) => (s.length ? (setRedoStack(r => [...r, s[s.length-1]]), s.slice(0, -1)) : s));
-  const redo = () => setRedoStack((r) => (r.length ? (setStack(s => [...s, r[r.length-1]]), r.slice(0, -1)) : r));
-  const clearAll = () => { setStack([]); setRedoStack([]); };
-  const exportPng = () => {
+  const redo = useCallback(() => {
+    setRedoStack((r) => (r.length ? (setStack(s => [...s, r[r.length-1]]), r.slice(0, -1)) : r));
+  }, []); // 依存関係なし
+
+  const clearAll = useCallback(() => {
+    setStack([]); setRedoStack([]);
+  }, []); // 依存関係なし
+
+  const exportPng = useCallback(() => {
     const url = baseRef.current!.toDataURL('image/png');
     onChange?.(url);
     const a = document.createElement('a'); a.href = url; a.download = 'snapshot-annotated.png'; a.click();
-  };
+  }, [onChange]); // onChange を依存関係に追加
 
   return (
     <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl border border-white/10 p-3 text-white overflow-hidden">

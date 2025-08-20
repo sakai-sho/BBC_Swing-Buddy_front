@@ -12,6 +12,7 @@ export type VideoCanvasProps = {
   onAdd: (anno: Annotation) => void;
   onUpdate: (anno: Annotation) => void;
   onDelete: (id: string) => void;
+  onSaveFrame?: (url: string) => void;
 };
 
 type DrawingState = {
@@ -30,7 +31,8 @@ export const VideoCanvas: React.FC<VideoCanvasProps> = ({
   onTimeChange,
   onAdd,
   onUpdate,
-  onDelete
+  onDelete,
+  onSaveFrame
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -59,6 +61,75 @@ export const VideoCanvas: React.FC<VideoCanvasProps> = ({
       video.currentTime = currentTime;
     }
   }, [currentTime]);
+
+  // Frame capture function
+  const captureFrame = useCallback(() => {
+    if (!onSaveFrame) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    // Create a temporary canvas to combine video frame and annotations
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    if (!tempCtx) return;
+
+    tempCanvas.width = video.videoWidth;
+    tempCanvas.height = video.videoHeight;
+
+    // Draw video frame
+    tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+    // Draw annotations on top
+    const visibleAnnotations = annotations.filter(
+      anno => Math.abs(anno.time - currentTime) <= 0.3
+    );
+
+    visibleAnnotations.forEach(anno => {
+      tempCtx.strokeStyle = anno.color || color;
+      tempCtx.fillStyle = anno.color || color;
+      tempCtx.lineWidth = 3;
+
+      switch (anno.tool) {
+        case 'circle': {
+          const circleAnno = anno as CircleAnno;
+          tempCtx.beginPath();
+          tempCtx.arc(circleAnno.center.x, circleAnno.center.y, circleAnno.radius, 0, 2 * Math.PI);
+          tempCtx.stroke();
+          break;
+        }
+        case 'line': {
+          const lineAnno = anno as LineAnno;
+          tempCtx.beginPath();
+          tempCtx.moveTo(lineAnno.from.x, lineAnno.from.y);
+          tempCtx.lineTo(lineAnno.to.x, lineAnno.to.y);
+          tempCtx.stroke();
+          break;
+        }
+        case 'angle': {
+          const angleAnno = anno as AngleAnno;
+          tempCtx.beginPath();
+          tempCtx.moveTo(angleAnno.a.x, angleAnno.a.y);
+          tempCtx.lineTo(angleAnno.b.x, angleAnno.b.y);
+          tempCtx.lineTo(angleAnno.c.x, angleAnno.c.y);
+          tempCtx.stroke();
+          break;
+        }
+        case 'text': {
+          const textAnno = anno as TextAnno;
+          tempCtx.fillStyle = 'white';
+          tempCtx.font = '16px Arial';
+          tempCtx.fillText(textAnno.text, textAnno.at.x, textAnno.at.y);
+          break;
+        }
+      }
+    });
+
+    // Convert to data URL and call onSaveFrame
+    const dataUrl = tempCanvas.toDataURL('image/png');
+    onSaveFrame(dataUrl);
+  }, [onSaveFrame, annotations, currentTime, color]);
 
   // Draw annotations
   const drawAnnotations = useCallback(() => {

@@ -45,7 +45,8 @@ export type CoachSignupFormData = {
   golf_exp: number;
   hourly_rate: number;
   certification: string;
-  Lesson_rank: 'high' | 'low' | '';
+  Lesson_rank: 'beginner' | 'intermediate' | 'advanced' | '';
+  supports_competitive: boolean;
   bio: string;
 
   // Step 3: Social

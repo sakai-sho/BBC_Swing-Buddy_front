@@ -3,28 +3,7 @@
 // Review draft storage (localStorage) + helpers
 // ———————————————————————————————————————
 
-export type ReviewId = string;
-
-export type Point = { x: number; y: number };
-
-export type Annotation =
-  | { id: string; tool: 'circle'; center: Point; radius: number; time: number }
-  | { id: string; tool: 'line'; from: Point; to: Point; time: number }
-  | { id: string; tool: 'text'; at: Point; text: string; time: number };
-
-export type ReviewClip = {
-  id: string;
-  label: string;
-  time: number;
-  annotations: Annotation[];
-};
-
-export type ReviewDraft = {
-  id: ReviewId;
-  videoUrl: string;
-  createdAt: number;
-  clips: ReviewClip[];
-};
+import type { ReviewId, ReviewDraft, ReviewClip, Annotation } from '../types/review';
 
 const KEY_PREFIX = 'sb:review:draft:';
 
@@ -47,7 +26,7 @@ export function saveDraft(draft: ReviewDraft): void {
 
 export function deleteDraft(id: ReviewId): void {
   try {
-    localStorage.removeItem(KEY_PREFIX + id);
+    localStorage.removeItem(KEY_PREFIX + draft.id);
   } catch {
     // ignore
   }
@@ -67,3 +46,6 @@ export function createDefaultDraft(id: ReviewId, videoUrl: string): ReviewDraft 
     ],
   };
 }
+// Re-export types for backward compatibility
+
+export type { ReviewId, ReviewDraft, ReviewClip, Annotation };

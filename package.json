@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "npx next start",
+    "start": "node_modules/.bin/next start",  <-- この行を修正
     "lint": "next lint"
   },
   "dependencies": {

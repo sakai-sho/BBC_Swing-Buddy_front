@@ -89,7 +89,6 @@ export const dict = {
       }
     },
     home: { title: 'ホーム' },
-    home: { title: 'ホーム' },
   },
   en: {
     tab: { home: 'Home', request: 'Request', mypage: 'My Page', settings: 'Settings' },
@@ -107,13 +106,11 @@ export const dict = {
       theme_system: 'Use system',
       brightness: 'Background brightness',
       appSettings: 'App Settings',
-      appSettings: 'App Settings',
       notifications: 'Notifications',
       subscription: 'Plan / Tickets',
       favoritesCoaches: 'Favorite Coaches',
       videoPrefs: 'Upload Preferences',
       dataStorage: 'Data & Storage',
-      support: 'Support',
       support: 'Support',
       help: 'Help / Contact',
       terms: 'Terms',
@@ -180,7 +177,6 @@ export const dict = {
         review_message: 'Review takes 1-3 business days. We will contact you by email.'
       }
     },
-    home: { title: 'Home' },
     home: { title: 'Home' },
   },
 } as const;

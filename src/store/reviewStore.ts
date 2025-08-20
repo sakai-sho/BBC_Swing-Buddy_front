@@ -26,7 +26,7 @@ export function saveDraft(draft: ReviewDraft): void {
 
 export function deleteDraft(id: ReviewId): void {
   try {
-    localStorage.removeItem(KEY_PREFIX + draft.id);
+    localStorage.removeItem(KEY_PREFIX + id);
   } catch {
     // ignore
   }

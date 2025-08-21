@@ -8,22 +8,40 @@ if [ -z "$PORT" ]; then
     export PORT=8080
 fi
 
+echo "Using PORT: $PORT"
+
 # アプリケーションディレクトリに移動
 cd /home/site/wwwroot
 
-# ビルドディレクトリが存在するかチェック
-if [ ! -d ".next" ]; then
-    echo "Building application..."
-    npm install
-    npm run build
-fi
+echo "Current directory: $(pwd)"
+echo "Directory contents:"
+ls -la
 
 # standaloneディレクトリが存在するかチェック
 if [ -d ".next/standalone" ]; then
-    echo "Starting from standalone build..."
+    echo "Found standalone build, starting server..."
     cd .next/standalone
-    node server.js
+    echo "Standalone directory contents:"
+    ls -la
+    
+    if [ -f "server.js" ]; then
+        echo "Starting server.js..."
+        PORT=$PORT node server.js
+    else
+        echo "server.js not found in standalone directory"
+        exit 1
+    fi
 else
-    echo "Starting from regular build..."
-    npm start
+    echo "Standalone build not found, attempting to build..."
+    npm install
+    npm run build
+    
+    if [ -d ".next/standalone" ]; then
+        echo "Build successful, starting server..."
+        cd .next/standalone
+        PORT=$PORT node server.js
+    else
+        echo "Build failed or standalone directory not created"
+        exit 1
+    fi
 fi

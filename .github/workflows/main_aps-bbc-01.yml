@@ -37,10 +37,7 @@ jobs:
           path: |
             .
             !.next/
-            !.next/standalone/
-            !.next/standalone/**
-            !.azure/
-            !.azure/**
+            !node_modules/
 
   deploy:
     runs-on: ubuntu-latest

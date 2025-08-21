@@ -1,8 +1,9 @@
 {
   "scripts": {
-    "dev": "next dev -p 3000",
-    "build": "next build",
+    "dev": "npx next dev -p 3000",
+    "build": "npx next build",
     "start": "node .next/standalone/server.js",
-    "start:azure": "npm run build && npm start"
+    "start:fallback": "npm run build && node .next/standalone/server.js",
+    "start:azure": "if [ -f '.next/standalone/server.js' ]; then node .next/standalone/server.js; else npm run build && node .next/standalone/server.js; fi"
   }
 }

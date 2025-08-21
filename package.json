@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "node .next/standalone/server.js",
     "start:fallback": "npm run build && node .next/standalone/server.js",
+    "start:azure": "if [ -f '.next/standalone/server.js' ]; then node .next/standalone/server.js; else npm run build && node .next/standalone/server.js; fi",
     "lint": "next lint"
   },
   "dependencies": {

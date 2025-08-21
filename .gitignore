@@ -1,6 +1,8 @@
 # ── Node / Next.js ──
 node_modules/
 .next/
+!/.next/standalone/
+!/.next/standalone/**
 dist/
 out/
 build/

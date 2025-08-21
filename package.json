@@ -2,10 +2,11 @@
   "name": "next-standalone-frontend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "bash azure-config/startup.sh",
+    "start": "bash .azure/startup.sh",
     "start:fallback": "npm run build && node .next/standalone/server.js",
     "start:azure": "if [ -f '.next/standalone/server.js' ]; then node .next/standalone/server.js; else npm run build && node .next/standalone/server.js; fi"
   },

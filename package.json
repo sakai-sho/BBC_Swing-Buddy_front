@@ -5,10 +5,9 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "node .next/standalone/server.js",
+    "start": "bash azure-config/startup.sh",
     "start:fallback": "npm run build && node .next/standalone/server.js",
-    "start:azure": "if [ -f '.next/standalone/server.js' ]; then node .next/standalone/server.js; else npm run build && node .next/standalone/server.js; fi",
-    "lint": "next lint"
+    "start:azure": "if [ -f '.next/standalone/server.js' ]; then node .next/standalone/server.js; else npm run build && node .next/standalone/server.js; fi"
   },
   "dependencies": {
     "lucide-react": "^0.344.0",

@@ -1,30 +1,8 @@
 {
-  "name": "next-standalone-frontend",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "bash .azure/startup.sh",
-    "start:fallback": "npm run build && node .next/standalone/server.js",
-    "start:azure": "if [ -f '.next/standalone/server.js' ]; then node .next/standalone/server.js; else npm run build && node .next/standalone/server.js; fi"
-  },
-  "dependencies": {
-    "lucide-react": "^0.344.0",
-    "next": "14.2.5",
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
-  },
-  "devDependencies": {
-    "@types/node": "24.2.1",
-    "@types/react": "^18.3.5",
-    "@types/react-dom": "^18.3.0",
-    "autoprefixer": "^10.4.18",
-    "eslint": "8.57.0",
-    "eslint-config-next": "14.2.5",
-    "postcss": "^8.4.35",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5.5.3"
+    "start": "node .next/standalone/server.js",
+    "start:azure": "npm run build && npm start"
   }
 }

@@ -23,16 +23,16 @@ echo "Current directory: $(pwd)"
 echo "Directory contents:"
 ls -la
 
-# .azureディレクトリの存在確認
-if [ ! -d ".azure" ]; then
-    echo "ERROR: .azure directory not found"
+# azure-configディレクトリの存在確認
+if [ ! -d "azure-config" ]; then
+    echo "ERROR: azure-config directory not found"
     exit 1
 fi
 
 # startup.shの実行権限を確認
-if [ ! -x ".azure/startup.sh" ]; then
+if [ ! -x "azure-config/startup.sh" ]; then
     echo "Making startup.sh executable..."
-    chmod +x .azure/startup.sh
+    chmod +x azure-config/startup.sh
 fi
 
 # standaloneディレクトリが存在するかチェック
